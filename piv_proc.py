@@ -65,13 +65,13 @@ vect = np.sqrt(dxs**2 + dys**2)*pix_vel
 
 # Plot the vector field
 fig, ax = plt.subplots()
-ax.quiver(dxs[:-2, :-2],dys[:-2, :-2],vect[:-2, :-2],cmap="plasma",scale_units="xy",scale=5,)
+ax.quiver(dxs[:-2, :-2],dys[:-2, :-2],vect[:-2, :-2],cmap="jet",scale_units="xy",scale=5,)
 ax.set_aspect("equal")
 ax.invert_yaxis()
 plt.show()
 
 # Plot the velocity magnitude
-plt.imshow(vect[:-2, :-2], vmin=0, vmax=12, cmap="jet")
+plt.imshow(vect[:-2, :-2], vmin=0, vmax=14, cmap="jet")
 plt.show()
 
 
