@@ -14,10 +14,10 @@ dt = 72*10**-6
 p1 = [300.8, 317.0]
 p2 = [1236.3, 335.9]
 pix_dist = math.dist(p1, p2)
-pix_vel = 0.11/(pix_dist*dt)
+pix_vel = 0.11/(pix_dist*dt) # speed per 1px of movement
 
 #Loading images
-img_src = cv.imread("images/B00010.tif", -1)
+img_src = cv.imread("images/alpha15_Diff/B00001.tif", -1)
 img_src_cal = cv.imread("images/Calibration_02/B00001.tif", -1)[1236:, :]
 
 #Spliting the image in two
@@ -26,24 +26,14 @@ xMax = int(img_src.shape[0]/2 - img_src.shape[0]/2%Int_Win)
 img_a = img_src[:xMax, :yMax]
 img_b = img_src[1236:(1236+xMax), :yMax]
 
-#Creating an overlay
-img_overlay = cv.addWeighted(img_a, 0.5, img_b, 0.5, 0)
-
-ys = np.arange(int(Int_Win/2), yMax-int(Int_Win/2)+1, int((1-Overlap/100)*Int_Win))
-xs = np.arange(int(Int_Win/2), xMax-int(Int_Win/2)+1, int((1-Overlap/100)*Int_Win))
-
 # Slice the images into interrogation windows
 def slice(image):
     sliced = np.empty((int(xMax/((1-(Overlap/100))*Int_Win)), int(yMax/((1-(Overlap/100))*Int_Win))), dtype=object)
-
     xc = 0
     for x in range(0,xMax,int((1-(Overlap/100))*Int_Win)):
         yc = 0
         for y in range(0, yMax, int((1-(Overlap/100))*Int_Win)):
-
             sliced[xc][yc] = np.array(image[x:(x+Int_Win), y:(y+Int_Win)])
-
-            #print(x, (x+Int_Win), y, (y+Int_Win))
             yc+=1
         xc+=1
     return sliced
@@ -51,9 +41,9 @@ def slice(image):
 slice_a = slice(img_a)
 slice_b = slice(img_b)
 
+# Arrays with x and y velocities
 dys = np.zeros((int(xMax/((1-(Overlap/100))*Int_Win)), int(yMax/((1-(Overlap/100))*Int_Win))))
 dxs = np.zeros((int(xMax/((1-(Overlap/100))*Int_Win)), int(yMax/((1-(Overlap/100))*Int_Win))))
-
 
 # The cross correlation function
 def cross_corr(sl_img_a, sl_img_b, x, y):
@@ -61,7 +51,7 @@ def cross_corr(sl_img_a, sl_img_b, x, y):
     y,x = np.unravel_index(corr.argmax(), corr.shape)
     dy, dx = y-(Int_Win - 1), x-(Int_Win - 1)
     sec = np.partition(corr.flatten(), -2)[-2]
-    SNR = corr.max()/sec
+    SNR = corr.max()/sec # Signal to noise ratio
     return dy, dx
 
 # Run the cross correlation for all interrogation windows
@@ -72,19 +62,16 @@ for x in range(slice_a.shape[0]):
         dxs[x][y] = -dx
 
 vect = np.sqrt(dxs**2 + dys**2)*pix_vel
-for i in range(len(vect)):
-    for j in range(len(vect[i])):
-        if abs(vect[i][j])>12:
-            vect[i][j] = 0
 
 # Plot the vector field
 fig, ax = plt.subplots()
-ax.quiver(dxs,dys,vect,cmap="plasma",angles="xy",scale_units="xy",scale=4,)
+ax.quiver(dxs[:-2, :-2],dys[:-2, :-2],vect[:-2, :-2],cmap="plasma",scale_units="xy",scale=5,)
 ax.set_aspect("equal")
+ax.invert_yaxis()
 plt.show()
 
 # Plot the velocity magnitude
-plt.imshow(vect[:74, :98], vmin=0, vmax=12, cmap="jet")
+plt.imshow(vect[:-2, :-2], vmin=0, vmax=12, cmap="jet")
 plt.show()
 
 
