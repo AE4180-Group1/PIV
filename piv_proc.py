@@ -9,7 +9,7 @@ import math
 AoA = 15           # airfoil angle of attack (0, 5 or 15)
 mask_on = 1          # 0 - mask off; 1 - mask on
 Int_Win = 32      # Interrogation window size in pixles
-Overlap = 50      # Overlap of interrogation windows in %
+Overlap = 50          # Overlap of interrogation windows in %
 dt = 72*10**-6    # Time step between two frames
 
 # Calibration
@@ -68,12 +68,36 @@ def cross_corr(sl_img_a, sl_img_b, x, y):
     SNR = corr.max()/sec # Signal to noise ratio
     return dy, dx
 
+#V1
 # Run the cross correlation for all interrogation windows
-for x in range(slice_a.shape[0]):
-    for y in range(slice_a.shape[1]):
-        dy, dx = cross_corr(slice_a, slice_b, x,y)
-        dys[x][y] = dy
-        dxs[x][y] = -dx
+if Overlap==0:
+    for x in range(slice_a.shape[0]):
+        for y in range(slice_a.shape[1]):
+            dy, dx = cross_corr(slice_a, slice_b, x,y) #have to take the average
+            dys[x][y] = dy
+            dxs[x][y] = dx
+else:
+    # Run the cross correlation for all interrogation windows
+    for x in range(slice_a.shape[0]):
+        for y in range(slice_a.shape[1]):
+            if ((x==0 and y==0) or (x==0 and y==(slice_a.shape[1]-1)) or (x==(slice_a.shape[0]-1) and y==0) or (x==(slice_a.shape[0]-1) and y==(slice_a.shape[1]-1))):
+                dy, dx = cross_corr(slice_a, slice_b, x,y) #have to take the average
+                dys[x][y] = dy
+                dxs[x][y] = dx
+            elif (y==0 or y==(slice_a.shape[1]-1)):
+                dy, dx = cross_corr(slice_a, slice_b, x, y)
+                dys[x][y] = (dy + dys[x-1][y])/2
+                dxs[x][y] = (dx + dxs[x-1][y])/2
+            elif (x==0 or x==(slice_a.shape[0]-1)):
+                dy, dx = cross_corr(slice_a, slice_b, x, y)
+                dys[x][y] = (dy + dys[x][y-1])/2
+                dxs[x][y] = (dx + dxs[x][y-1])/2
+            else:
+                dy, dx = cross_corr(slice_a, slice_b, x, y)
+                dys[x][y] = (dy + dys[x][y-1] + dys[x-1][y] + dys[x-1][y-1])/4
+                dxs[x][y] = (dx + dxs[x][y-1] + dxs[x-1][y] + dxs[x-1][y-1])/4
+
+dxs = dxs*-1
 
 # Apply mask
 if mask_on == 1:
@@ -108,8 +132,8 @@ plt.show()
 # Showing images
 # plt.imshow(img_src_cal, cmap="gray", vmin=0, vmax=10000)
 # plt.show()
-plt.imshow(img_a, vmin=0, vmax = 300, cmap="gray")
-plt.show()
+# plt.imshow(img_a, vmin=0, vmax = 300, cmap="gray")
+# plt.show()
 # plt.imshow(img_overlay, vmin=0, vmax = 300, cmap="gray")
 # plt.show()
 
@@ -126,3 +150,6 @@ plt.show()
 # # Plot a 3D surface
 # ax.plot_surface(X, Y, cc)
 #plt.show()
+# overlay = cv.addWeighted(img_a, 0.5, img_b, 0.5, 0)
+# plt.imshow(overlay, cmap="gray", vmin=0, vmax=300)
+# plt.show()
