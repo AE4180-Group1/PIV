@@ -21,7 +21,9 @@ folder = {
     "alpha5 SP_mean_std": "\\alpha5_SubOverTimeMin_sL=all_PIV_SP(32x32_50ov)_Avg_Stdev=unknown\\",
     "alpha15 SP_mean_std": "\\alpha15_SubOverTimeMin_sL=all_PIV_SP(32x32_50ov)_Avg_Stdev=unknown\\",
     "alpha15 instant": "\\alpha15_SubOverTimeMin_sL=all_PIV_SP(32x32_50ov)=unknown_01\\",
-    "alpha15 quick_SP_mean_std": "\\AoA_15_sdtdeg_SubOverTimeMin_sL=5_PIV_SP(32x32_50ov)_Avg_Stdev=unknown\\"
+    "alpha15 quick_SP_mean_std": "\\AoA_15_sdtdeg_SubOverTimeMin_sL=5_PIV_SP(32x32_50ov)_Avg_Stdev=unknown\\",
+    "alpha0 instant": "\\alpha0_SubOverTimeMin_sL=all_01_PIV_SP(32x32_50ov)=unknown\\",
+    "alpha5 instant": "\\alpha5_SubOverTimeMin_sL=all_PIV_SP(32x32_50ov)=unknown\\"
           }
 
 # Create array and function, so all filenames can be generated
@@ -55,20 +57,21 @@ def calculate_mean_velocity(file_path):
     X, Y = np.meshgrid(x_coord, y_coord)
     mean_velocity = np.sqrt(vx**2 + vy**2)
     velocity = mean_velocity.reshape([len(y_coord), len(x_coord)])
+    velocity = np.flip(velocity, 0)
 
     return mean_velocity, velocity
 #%% INSTANTENEOUS
 mean_velocity, velocity = calculate_mean_velocity(working_directory + \
                                                   folder["alpha15 instant"] + \
-                                                  file(number[0]))
+                                                  file(number[18]))
 
 #velocity = mean_velocity.reshape([len(y_coord), len(x_coord)])
 
 plt.figure(figsize=(12, 8), dpi=dpi)
-plt.title(r"Single pass 32x32 @ 50 % OL. Instantaneous at $15 \degree$.")
-image = plt.imshow(velocity,
-                    vmin = mean_velocity[mean_velocity > 0].min(),
-                    vmax = max(mean_velocity),
+#plt.title(r"Single pass 32x32 @ 50 % OL. Instantaneous at $15 \degree$.")
+image = plt.imshow(velocity[2:-2, 2:-2],
+                    vmin = 0.001,
+                    vmax = 14,
                     cmap = cmap,
                     extent = [0, x_size, 0, y_size])
 colorbar = plt.colorbar(image, extend="min")
@@ -85,7 +88,7 @@ mean_velocity, velocity = calculate_mean_velocity(working_directory + \
 #velocity = mean_velocity.reshape([len(y_coord), len(x_coord)])
 
 plt.figure(figsize=(12, 8), dpi=dpi)
-plt.title(r"Single pass 32x32 @50 % overlap. Mean at $15 \degree$. Small dt")
+plt.title(r"Single pass 32x32 @50 % overlap. Mean at $15 \degree$. Small dt. Looks weird")
 image = plt.imshow(velocity,
                     vmin = mean_velocity[mean_velocity > 0].min(),
                     vmax = max(mean_velocity),
@@ -114,10 +117,10 @@ for degree in [0, 5, 15]:
             raise "File does not exist."
 
         plt.figure(figsize=(12, 8), dpi=dpi)
-        plt.title(fr"Single pass 32x32 50 % overlap. {name} at {degree}$\degree$.")
-        image = plt.imshow(velocity,
-                            vmin = mean_velocity[mean_velocity > 0].min(),
-                            vmax = max(mean_velocity),
+        #plt.title(fr"Single pass 32x32 50 % overlap. {name} at {degree}$\degree$.")
+        image = plt.imshow(velocity[2:-2, 2:-2],
+                            vmin = 0.1,
+                            vmax = 14,
                             cmap = cmap,
                             extent = [0, x_size, 0, y_size])
         colorbar = plt.colorbar(image, extend="min")
@@ -140,12 +143,12 @@ for sample in sample_size:
         ensemble_mean_velocity[i, :], velocity = calculate_mean_velocity(working_directory + \
                                                       folder[f"alpha15 instant"] + \
                                                       file(number[i]))
-    ensemble = ensemble_mean_velocity.sum(axis=0)
+    ensemble = ensemble_mean_velocity.sum(axis=0)/sample
     plt.figure(figsize=(12, 8), dpi=dpi)
-    plt.title(fr"Single pass 32x32 50 % overlap. Mean at 15$\degree$, ensamble average of {sample}.")
-    image = plt.imshow(ensemble.reshape([len(y_coord), len(x_coord)]),
-                        vmin = ensemble[ensemble > 0].min(),
-                        vmax = max(ensemble),
+    #plt.title(fr"Single pass 32x32 50 % overlap. Mean at 15$\degree$, ensamble average of {sample}.")
+    image = plt.imshow(np.flip(ensemble.reshape([len(y_coord), len(x_coord)])[2:-2, 2:-2], 0),
+                        vmin = 0.001,
+                        vmax = 14,
                         cmap = cmap,
                         extent = [0, x_size, 0, y_size])
     colorbar = plt.colorbar(image, extend="min")
